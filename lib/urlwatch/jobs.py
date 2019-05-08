@@ -35,6 +35,10 @@ import os
 import re
 import subprocess
 import requests
+from requests.auth import HTTPBasicAuth
+from requests.auth import HTTPDigestAuth
+import requests_ntlm
+from requests_ntlm import HttpNtlmAuth
 import urlwatch
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
@@ -203,7 +207,8 @@ class UrlJob(Job):
 
     __required__ = ('url',)
     __optional__ = ('cookies', 'data', 'method', 'ssl_no_verify', 'ignore_cached', 'http_proxy', 'https_proxy',
-                    'headers', 'ignore_connection_errors', 'ignore_http_error_codes', 'encoding', 'timeout')
+                    'headers', 'ignore_connection_errors', 'ignore_http_error_codes', 'encoding', 'timeout',
+                    'auth_method', 'username', 'password')
 
     LOCATION_IS_URL = True
     CHARSET_RE = re.compile('text/(html|plain); charset=([^;]*)')
@@ -261,6 +266,15 @@ class UrlJob(Job):
             timeout = None
         else:
             timeout = self.timeout
+        
+        if self.auth_method is None:
+            auth = None
+        elif self.auth_method == 'BASIC':
+            auth = HTTPBasicAuth(self.username, self.password)
+        elif self.auth_method == 'DIGEST':
+            auth = HTTPDigestAuth(self.username, self.password)
+        elif self.auth_method == 'NTLM':
+            auth = HttpNtlmAuth(self.username, self.password)
 
         response = requests.request(url=self.url,
                                     data=self.data,
@@ -269,7 +283,8 @@ class UrlJob(Job):
                                     verify=(not self.ssl_no_verify),
                                     cookies=self.cookies,
                                     proxies=proxies,
-                                    timeout=timeout)
+                                    timeout=timeout,
+                                    auth=auth)
 
         response.raise_for_status()
         if response.status_code == requests.codes.not_modified:
