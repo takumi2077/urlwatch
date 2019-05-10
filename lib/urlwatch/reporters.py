@@ -628,3 +628,13 @@ class SlackReporter(TextReporter):
 
     def chunkstring(self, string, length):
         return (string[0 + i:length + i] for i in range(0, len(string), length))
+
+class JenkinsReport(WebServiceReporter):
+    """Invoke Jenkins Job"""
+
+    __kind__ = 'jenkins'
+
+    def submit(self):
+        service = Jenkins(self.config['url'], self.config['username'], self.config['password'])
+        service.build_job(self.config['job_name'], self.confg['parameters'])
+
