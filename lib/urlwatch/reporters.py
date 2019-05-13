@@ -629,12 +629,24 @@ class SlackReporter(TextReporter):
     def chunkstring(self, string, length):
         return (string[0 + i:length + i] for i in range(0, len(string), length))
 
-class JenkinsReport(WebServiceReporter):
+class JenkinsReport(TextReporter):
     """Invoke Jenkins Job"""
 
     __kind__ = 'jenkins'
 
     def submit(self):
+        super().submit()
+
+        status = 'unchanged'
+        for j in self.job_states:
+            if j.verb == 'changed':
+                status = 'changed'
+                break
+
+        if status == 'unchanged':
+            logger.debug('Not invoking Jenkins job (no changes)')
+            return
+
         service = jenkins.Jenkins(self.config['url'], self.config['username'], self.config['password'])
         service.build_job(self.config['job_name'], self.config['parameters'], self.config['token'])
 
