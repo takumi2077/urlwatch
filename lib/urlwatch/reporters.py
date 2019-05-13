@@ -636,5 +636,5 @@ class JenkinsReport(WebServiceReporter):
 
     def submit(self):
         service = Jenkins(self.config['url'], self.config['username'], self.config['password'])
-        service.build_job(self.config['job_name'], self.confg['parameters'])
+        service.build_job(self.config['job_name'], self.config['parameters'])
 
