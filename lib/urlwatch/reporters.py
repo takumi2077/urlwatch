@@ -40,7 +40,7 @@ import sys
 import time
 import cgi
 import functools
-
+import jenkins
 import requests
 
 import urlwatch
@@ -602,8 +602,19 @@ class SlackReporter(TextReporter):
 
     def submit_to_slack(self, webhook_url, text):
         logger.debug("Sending slack request with text:{0}".format(text))
+
+        proxies = {
+            'http': os.getenv('HTTP_PROXY'),
+            'https': os.getenv('HTTPS_PROXY'),
+        }
+
+        if self.config['http_proxy'] is not None:
+            proxies['http'] = self.config['http_proxy']
+        if self.config['https_proxy'] is not None:
+            proxies['https'] = self.config['https_proxy']
+
         post_data = {"text": text}
-        result = requests.post(webhook_url, json=post_data)
+        result = requests.post(webhook_url, json=post_data, proxies=proxies)
         try:
             if result.status_code == requests.codes.ok:
                 logger.info("Slack response: ok")
